@@ -1,5 +1,5 @@
 
-import { BookCheck, Brain, Calculator, ChartBar, ClipboardCheck, FileSpreadsheet, Languages, Percentage, Repeat, Users } from 'lucide-react';
+import { BookCheck, Brain, Calculator, ChartBar, ClipboardCheck, FileSpreadsheet, Languages, Percent, Repeat, Users } from 'lucide-react';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -63,7 +63,7 @@ export const topics: Topic[] = [
     id: 'percentages',
     title: 'Percentages',
     description: 'Master problems involving percentage calculations and applications.',
-    icon: Percentage,
+    icon: Percent,
     color: 'bg-indigo-50 text-indigo-600',
     difficulties: ['easy', 'medium', 'hard'],
     questionsCount: 25
