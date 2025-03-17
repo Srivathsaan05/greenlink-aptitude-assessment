@@ -1,22 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown, LogOut, User } from 'lucide-react';
 import Logo from './Logo';
 import { useUser } from '../context/UserContext';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useUser();
+  const { isAuthenticated, logout, profile } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Topics', path: '/topics' },
     { label: 'Statistics', path: '/statistics' },
-    ...(!isAuthenticated ? [{ label: 'Login', path: '/login' }] : []),
-    ...(isAuthenticated ? [{ label: 'Profile', path: '/profile' }] : []),
   ];
 
   useEffect(() => {
@@ -63,13 +69,34 @@ const Navbar: React.FC = () => {
               </Link>
             ))}
             
-            {isAuthenticated && (
-              <button
-                onClick={logout}
-                className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors duration-300"
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <span className="text-gray-700 font-medium">{profile.name || 'User'}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => navigate('/auth')}
+                className="bg-green-600 text-white hover:bg-green-700"
               >
-                Logout
-              </button>
+                Login / Sign Up
+              </Button>
             )}
           </div>
           
@@ -108,13 +135,28 @@ const Navbar: React.FC = () => {
             </Link>
           ))}
           
-          {isAuthenticated && (
-            <button
-              onClick={logout}
-              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50"
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/profile"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={logout}
+                className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="block px-3 py-2 rounded-md text-base font-medium text-green-700 hover:text-green-800 hover:bg-green-50"
             >
-              Logout
-            </button>
+              Login / Sign Up
+            </Link>
           )}
         </div>
       </div>

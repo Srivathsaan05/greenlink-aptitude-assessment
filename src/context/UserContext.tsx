@@ -1,5 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
 
 type UserProfile = {
   name: string;
@@ -22,13 +25,15 @@ type UserContextType = {
   isAuthenticated: boolean;
   profile: UserProfile;
   scores: ScoreEntry[];
-  login: (email: string, name: string) => void;
-  logout: () => void;
-  updateProfile: (profile: Partial<UserProfile>) => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   addScore: (score: Omit<ScoreEntry, 'date'>) => void;
   getTopicScore: (topic: string) => number;
   getTotalScore: () => number;
   getAverageScore: () => number;
+  loading: boolean;
 }
 
 const defaultProfile: UserProfile = {
@@ -46,44 +51,224 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Load user data from localStorage on initial render
+  // Initialize user session and profile
   useEffect(() => {
-    const storedUser = localStorage.getItem('greenlink_user');
-    const storedScores = localStorage.getItem('greenlink_scores');
+    const initializeAuth = async () => {
+      setLoading(true);
+      
+      // Check active session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error getting session:', sessionError);
+        setLoading(false);
+        return;
+      }
+      
+      if (session) {
+        setIsAuthenticated(true);
+        
+        // Get user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData) {
+          setProfile({
+            name: profileData.name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
+            education: profileData.education || '',
+            skills: profileData.skills || [],
+            experience: profileData.experience || []
+          });
+        }
+        
+        // Load scores from localStorage
+        const storedScores = localStorage.getItem('greenlink_scores');
+        if (storedScores) {
+          setScores(JSON.parse(storedScores));
+        }
+      }
+      
+      setLoading(false);
+    };
     
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setProfile(userData);
-      setIsAuthenticated(true);
-    }
+    initializeAuth();
     
-    if (storedScores) {
-      setScores(JSON.parse(storedScores));
-    }
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setIsAuthenticated(true);
+        
+        // Get user profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileData) {
+          setProfile({
+            name: profileData.name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
+            education: profileData.education || '',
+            skills: profileData.skills || [],
+            experience: profileData.experience || []
+          });
+          
+          // Load scores from localStorage
+          const storedScores = localStorage.getItem('greenlink_scores');
+          if (storedScores) {
+            setScores(JSON.parse(storedScores));
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        setProfile(defaultProfile);
+        setScores([]);
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
-
-  // Save to localStorage whenever user data changes
+  
+  // Save scores to localStorage whenever they change
   useEffect(() => {
-    if (isAuthenticated) {
-      localStorage.setItem('greenlink_user', JSON.stringify(profile));
+    if (isAuthenticated && scores.length > 0) {
       localStorage.setItem('greenlink_scores', JSON.stringify(scores));
     }
-  }, [isAuthenticated, profile, scores]);
+  }, [isAuthenticated, scores]);
 
-  const login = (email: string, name: string) => {
-    setProfile(prev => ({ ...prev, email, name }));
-    setIsAuthenticated(true);
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      navigate('/');
+      toast({
+        title: "Login successful",
+        description: "You've been logged in successfully.",
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const signup = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Signup failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      navigate('/');
+      toast({
+        title: "Signup successful",
+        description: "Your account has been created successfully.",
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setProfile(defaultProfile);
-    localStorage.removeItem('greenlink_user');
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      setIsAuthenticated(false);
+      setProfile(defaultProfile);
+      setScores([]);
+      localStorage.removeItem('greenlink_scores');
+      navigate('/');
+      toast({
+        title: "Logged out",
+        description: "You've been logged out successfully.",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateProfile = (updatedProfile: Partial<UserProfile>) => {
-    setProfile(prev => ({ ...prev, ...updatedProfile }));
+  const updateProfile = async (updatedProfile: Partial<UserProfile>) => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('User not found');
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: updatedProfile.name,
+          phone: updatedProfile.phone,
+          education: updatedProfile.education,
+          skills: updatedProfile.skills,
+          experience: updatedProfile.experience,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      setProfile(prev => ({ ...prev, ...updatedProfile }));
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addScore = (score: Omit<ScoreEntry, 'date'>) => {
@@ -122,12 +307,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         scores,
         login,
+        signup,
         logout,
         updateProfile,
         addScore,
         getTopicScore,
         getTotalScore,
-        getAverageScore
+        getAverageScore,
+        loading
       }}
     >
       {children}
