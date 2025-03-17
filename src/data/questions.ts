@@ -195,9 +195,6 @@ const quantitativeAptitudeQuestions: Question[] = [
   },
 ];
 
-// Generate more questions for each topic following the pattern above
-// ... (More questions for other topics would be added here)
-
 // Combine all questions
 const allQuestions: Question[] = [
   ...logicalReasoningQuestions,
