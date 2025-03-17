@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   withText?: boolean;
 }
 
@@ -12,14 +12,16 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', withText = true }) => {
     sm: 'h-8',
     md: 'h-10',
     lg: 'h-16',
-    xl: 'h-24'
+    xl: 'h-24',
+    '2xl': 'h-32'
   };
 
   const textSizeClasses = {
     sm: 'text-lg',
     md: 'text-xl',
     lg: 'text-3xl',
-    xl: 'text-5xl'
+    xl: 'text-5xl',
+    '2xl': 'text-6xl'
   };
 
   return (
@@ -71,7 +73,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', withText = true }) => {
           <h1 className={`font-bold ${textSizeClasses[size]} tracking-tight leading-none text-green-700`}>
             GREEN<span className="text-black font-light">LINK</span>
           </h1>
-          {size === 'lg' || size === 'xl' ? (
+          {size === 'lg' || size === 'xl' || size === '2xl' ? (
             <p className="text-xs tracking-widest text-slate-500 uppercase mt-1">
               Aptitude Assessment
             </p>

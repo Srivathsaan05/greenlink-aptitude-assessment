@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { Topic } from '../data/topicsData';
 import { useUser } from '../context/UserContext';
@@ -11,6 +11,7 @@ interface TopicCardProps {
 
 const TopicCard: React.FC<TopicCardProps> = ({ topic }) => {
   const { getTopicScore } = useUser();
+  const navigate = useNavigate();
   const score = getTopicScore(topic.id);
   
   return (
@@ -38,13 +39,13 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic }) => {
             )}
           </div>
           
-          <Link
-            to={`/topics/${topic.id}`}
+          <button
+            onClick={() => navigate(`/topics/${topic.id}`)}
             className="inline-flex items-center text-green-600 text-sm font-medium hover:text-green-800 transition-colors duration-300"
           >
             Start
             <ChevronRight className="h-4 w-4 ml-1" />
-          </Link>
+          </button>
         </div>
       </div>
       

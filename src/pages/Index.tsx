@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart3, BookOpen, BrainCircuit, CheckCircle, ListChecks } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -10,6 +10,7 @@ import { useUser } from '../context/UserContext';
 
 const Index: React.FC = () => {
   const { isAuthenticated, getAverageScore, scores } = useUser();
+  const navigate = useNavigate();
   
   const features = [
     {
@@ -60,21 +61,21 @@ const Index: React.FC = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link
-                  to="/topics"
+                <button
+                  onClick={() => navigate('/topics')}
                   className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 shadow-sm transition-colors duration-300"
                 >
                   Start Assessment
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+                </button>
                 
                 {!isAuthenticated && (
-                  <Link
-                    to="/login"
+                  <button
+                    onClick={() => navigate('/auth')}
                     className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors duration-300"
                   >
                     Create Account
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>
@@ -82,7 +83,7 @@ const Index: React.FC = () => {
             <div className="flex justify-center animate-scale-in">
               <div className="relative">
                 <div className="absolute -inset-4 bg-green-50 rounded-full blur-2xl opacity-70"></div>
-                <Logo size="xl" />
+                <Logo size="2xl" />
               </div>
             </div>
           </div>
@@ -137,25 +138,25 @@ const Index: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{topic.title}</h3>
                 <p className="text-gray-600 mb-4">{topic.description}</p>
-                <Link
-                  to={`/topics/${topic.id}`}
+                <button
+                  onClick={() => navigate(`/topics/${topic.id}`)}
                   className="inline-flex items-center text-green-600 hover:text-green-700 font-medium"
                 >
                   Start Practice
                   <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
+                </button>
               </div>
             ))}
           </div>
           
           <div className="text-center mt-12">
-            <Link
-              to="/topics"
+            <button
+              onClick={() => navigate('/topics')}
               className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors duration-300"
             >
               View All Topics
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -168,13 +169,13 @@ const Index: React.FC = () => {
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             Start your assessment journey today and track your progress across all aptitude domains.
           </p>
-          <Link
-            to="/topics"
+          <button
+            onClick={() => navigate('/topics')}
             className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 shadow-md transition-colors duration-300"
           >
             Begin Assessment
             <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          </button>
           
           {isAuthenticated && scores.length > 0 && (
             <div className="mt-6">
