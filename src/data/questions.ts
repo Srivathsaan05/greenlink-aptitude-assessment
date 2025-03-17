@@ -24,7 +24,7 @@ const logicalReasoningQuestions: Question[] = [
       'None of the above'
     ],
     correctAnswer: 1,
-    explanation: 'Since all roses are flowers and some flowers fade quickly, it's possible that some roses are among those flowers that fade quickly. Therefore, "Some roses fade quickly" is a possibility, but not a necessity.'
+    explanation: 'Since all roses are flowers and some flowers fade quickly, it\'s possible that some roses are among those flowers that fade quickly. Therefore, "Some roses fade quickly" is a possibility, but not a necessity.'
   },
   {
     id: 'lr-easy-2',
