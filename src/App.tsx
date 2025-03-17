@@ -8,6 +8,8 @@ import { UserProvider } from "./context/UserContext";
 import Index from "./pages/Index";
 import Topics from "./pages/Topics";
 import TopicDetail from "./pages/TopicDetail";
+import Assessment from "./pages/Assessment";
+import Results from "./pages/Results";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/topics" element={<Topics />} />
             <Route path="/topics/:topicId" element={<TopicDetail />} />
+            <Route path="/assessment/:topicId/:difficulty" element={<Assessment />} />
+            <Route path="/results/:topicId/:difficulty" element={<Results />} />
             <Route path="/auth" element={<AuthPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
