@@ -7,6 +7,8 @@ import { getTopicById, getDifficultyLabel, getDifficultyColor, Difficulty } from
 import { Question } from '../data/types/questionTypes';
 import { useUser } from '../context/UserContext';
 import { Progress } from '@/components/ui/progress';
+import { PerformanceChart } from '@/components/results/PerformanceChart';
+import { PerformanceMetrics } from '@/components/results/PerformanceMetrics';
 
 const Results: React.FC = () => {
   const { topicId, difficulty } = useParams<{ topicId: string; difficulty: string }>();
@@ -14,7 +16,6 @@ const Results: React.FC = () => {
   const navigate = useNavigate();
   const { scores, isAuthenticated } = useUser();
   
-  // Get results from location state
   const { score, total, answers, questions, timeTaken, questionTimes } = location.state || { 
     score: 0, 
     total: 0, 
@@ -26,7 +27,6 @@ const Results: React.FC = () => {
   
   const topic = getTopicById(topicId || '');
   
-  // Redirect if not authenticated
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -34,14 +34,12 @@ const Results: React.FC = () => {
   }, [isAuthenticated, navigate]);
   
   if (!topic || !questions.length) {
-    // Redirect to topics if no data
     navigate('/topics');
     return null;
   }
   
   const percentage = Math.round((score / total) * 100);
   
-  // Determine result message
   const getResultMessage = () => {
     if (percentage >= 90) return "Excellent! You've mastered this topic.";
     if (percentage >= 75) return "Great job! You have a strong understanding.";
@@ -50,7 +48,6 @@ const Results: React.FC = () => {
     return "Keep practicing! You'll improve with more study.";
   };
   
-  // Get performance class
   const getPerformanceClass = () => {
     if (percentage >= 90) return "text-green-600";
     if (percentage >= 75) return "text-blue-600";
@@ -59,7 +56,6 @@ const Results: React.FC = () => {
     return "text-red-600";
   };
 
-  // Get performance rating
   const getPerformanceRating = (): 'excellent' | 'good' | 'average' | 'poor' => {
     if (percentage >= 90) return "excellent";
     if (percentage >= 70) return "good";
@@ -67,7 +63,6 @@ const Results: React.FC = () => {
     return "poor";
   };
 
-  // Get performance rating display
   const getPerformanceRatingDisplay = () => {
     const rating = getPerformanceRating();
     
@@ -99,7 +94,6 @@ const Results: React.FC = () => {
     }
   };
   
-  // Get topic highest score
   const getTopicHighestScore = () => {
     const topicScores = scores.filter(s => s.topic === topicId && s.difficulty === difficulty);
     if (topicScores.length === 0) return 0;
@@ -107,7 +101,6 @@ const Results: React.FC = () => {
     return Math.max(...topicScores.map(s => (s.score / s.total) * 100));
   };
 
-  // Format time display
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -118,10 +111,8 @@ const Results: React.FC = () => {
   const isNewRecord = percentage >= topicHighestScore;
   const performanceDisplay = getPerformanceRatingDisplay();
 
-  // Calculate average time per question
   const avgTimePerQuestion = timeTaken ? Math.round(timeTaken / total) : 0;
   
-  // Get question-specific metrics
   const getQuestionPerformanceMetrics = () => {
     const answered = answers.filter(answer => answer !== null).length;
     const correct = answers.reduce((count, answer, index) => {
@@ -150,7 +141,6 @@ const Results: React.FC = () => {
       
       <main className="flex-grow pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="mb-12 animate-slide-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
               <div>
@@ -179,7 +169,6 @@ const Results: React.FC = () => {
             </div>
           </div>
           
-          {/* Score Card */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-12 animate-scale-in">
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
               <div className="flex items-center justify-between">
@@ -219,71 +208,34 @@ const Results: React.FC = () => {
                 </div>
               </div>
               
-              {/* Performance Metrics */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-500">Total Time</span>
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <p className="text-xl font-semibold">{formatTime(timeTaken)}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Avg. {avgTimePerQuestion}s per question
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-500">Performance</span>
-                      {performanceDisplay.icon}
-                    </div>
-                    <div className="flex items-center">
-                      <span className={`px-2 py-0.5 rounded text-sm font-medium ${performanceDisplay.color}`}>
-                        {performanceDisplay.label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {percentage >= topicHighestScore ? 'New personal best!' : `Personal best: ${Math.round(topicHighestScore)}%`}
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-500">Question Breakdown</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-green-600">Correct ({metrics.correct})</span>
-                          <span>{metrics.correctPercentage}%</span>
-                        </div>
-                        <Progress value={metrics.correctPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-green-500" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-red-600">Incorrect ({metrics.incorrect})</span>
-                          <span>{metrics.incorrectPercentage}%</span>
-                        </div>
-                        <Progress value={metrics.incorrectPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-red-500" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-500">Skipped ({metrics.skipped})</span>
-                          <span>{metrics.skippedPercentage}%</span>
-                        </div>
-                        <Progress value={metrics.skippedPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <PerformanceMetrics
+                  score={score}
+                  total={total}
+                  timeTaken={timeTaken}
+                  metrics={metrics}
+                  performanceRating={getPerformanceRating()}
+                  isNewRecord={isNewRecord}
+                  topicHighestScore={topicHighestScore}
+                />
               </div>
             </div>
           </div>
           
-          {/* Questions Review */}
+          <div className="mb-12 animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Performance Analysis</h2>
+            <PerformanceChart 
+              scores={scores} 
+              currentScore={{
+                topic: topicId || '',
+                score,
+                total,
+                timeTaken,
+                performanceRating: getPerformanceRating()
+              }} 
+            />
+          </div>
+          
           <div className="mb-12 animate-fade-in">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Assessment Review</h2>
             
@@ -373,7 +325,6 @@ const Results: React.FC = () => {
                         ))}
                       </div>
                       
-                      {/* Explanation if available */}
                       {question.explanation && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                           <p className="text-sm text-blue-800">
