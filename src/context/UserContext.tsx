@@ -11,6 +11,7 @@ type UserProfile = {
   education: string;
   skills: string[];
   experience: string[];
+  photoUrl?: string;
 }
 
 type ScoreEntry = {
@@ -19,6 +20,13 @@ type ScoreEntry = {
   score: number;
   total: number;
   date: Date;
+  timeTaken?: number; // Time taken in seconds
+  performanceRating?: 'excellent' | 'good' | 'average' | 'poor';
+}
+
+type PhoneSignInOptions = {
+  signUp?: boolean;
+  name?: string;
 }
 
 type UserContextType = {
@@ -26,13 +34,15 @@ type UserContextType = {
   profile: UserProfile;
   scores: ScoreEntry[];
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   addScore: (score: Omit<ScoreEntry, 'date'>) => void;
   getTopicScore: (topic: string) => number;
   getTotalScore: () => number;
   getAverageScore: () => number;
+  loginWithPhone: (phone: string, options?: PhoneSignInOptions) => Promise<void>;
+  verifyOTP: (phone: string, otp: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -42,7 +52,8 @@ const defaultProfile: UserProfile = {
   phone: '',
   education: '',
   skills: [],
-  experience: []
+  experience: [],
+  photoUrl: ''
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -52,6 +63,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [phoneLoginData, setPhoneLoginData] = useState<{ phone: string, options?: PhoneSignInOptions }>({ phone: '' });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -178,7 +190,88 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const signup = async (email: string, password: string, name: string) => {
+  const loginWithPhone = async (phone: string, options?: PhoneSignInOptions) => {
+    try {
+      setLoading(true);
+      setPhoneLoginData({ phone, options });
+      
+      const { error } = await supabase.auth.signInWithOtp({ 
+        phone,
+        options: {
+          shouldCreateUser: options?.signUp || false
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Phone verification failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      toast({
+        title: "Verification code sent",
+        description: "Please check your phone for the verification code.",
+      });
+    } catch (error) {
+      console.error('Phone login error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const verifyOTP = async (phone: string, otp: string) => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token: otp,
+        type: 'sms'
+      });
+      
+      if (error) {
+        toast({
+          title: "Verification failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      // If signing up, update the profile with the provided name
+      if (phoneLoginData.options?.signUp && phoneLoginData.options?.name) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({
+              name: phoneLoginData.options.name,
+              phone: phone,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        }
+      }
+      
+      navigate('/');
+      toast({
+        title: "Verification successful",
+        description: "You've been logged in successfully.",
+      });
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const signup = async (email: string, password: string, name: string, phone: string = '') => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({ 
@@ -186,7 +279,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         options: {
           data: {
-            name
+            name,
+            phone
           }
         }
       });
@@ -272,7 +366,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addScore = (score: Omit<ScoreEntry, 'date'>) => {
-    const newScore = { ...score, date: new Date() };
+    // Add performance rating based on score percentage
+    const percentage = Math.round((score.score / score.total) * 100);
+    let performanceRating: 'excellent' | 'good' | 'average' | 'poor' = 'average';
+    
+    if (percentage >= 90) performanceRating = 'excellent';
+    else if (percentage >= 70) performanceRating = 'good';
+    else if (percentage >= 50) performanceRating = 'average';
+    else performanceRating = 'poor';
+    
+    const newScore = { 
+      ...score, 
+      date: new Date(),
+      performanceRating 
+    };
+    
     setScores(prev => [...prev, newScore]);
   };
 
@@ -314,6 +422,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getTopicScore,
         getTotalScore,
         getAverageScore,
+        loginWithPhone,
+        verifyOTP,
         loading
       }}
     >

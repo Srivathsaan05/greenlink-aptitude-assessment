@@ -7,4 +7,5 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   explanation?: string;
+  timeLimit?: number; // Time in seconds to answer the question
 }
