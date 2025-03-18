@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart3, BookOpen, BrainCircuit, CheckCircle, ListChecks } from 'lucide-react';
@@ -30,8 +29,9 @@ const Index: React.FC = () => {
     },
     {
       icon: <BookOpen className="w-6 h-6 text-green-500" />,
-      title: 'Resume Builder',
-      description: 'Create a professional resume based on your profile and achievements.'
+      title: 'Interview Tips',
+      description: 'Access comprehensive resources to prepare for your job interviews.',
+      link: '/interview-tips'
     }
   ];
   
@@ -105,12 +105,21 @@ const Index: React.FC = () => {
               <div 
                 key={index} 
                 className="border border-gray-100 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                onClick={() => feature.link && navigate(feature.link)}
+                style={{ cursor: feature.link ? 'pointer' : 'default' }}
               >
                 <div className="h-12 w-12 rounded-lg bg-green-50 flex items-center justify-center mb-4">
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
+                {feature.link && (
+                  <div className="mt-4">
+                    <span className="text-green-600 font-medium flex items-center">
+                      Learn more <ArrowRight className="ml-1 h-4 w-4" />
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

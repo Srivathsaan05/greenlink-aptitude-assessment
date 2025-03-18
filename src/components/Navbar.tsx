@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, LogOut, User } from 'lucide-react';
@@ -23,6 +22,7 @@ const Navbar: React.FC = () => {
     { label: 'Home', path: '/' },
     { label: 'Topics', path: '/topics' },
     { label: 'Statistics', path: '/statistics' },
+    { label: 'Interview Tips', path: '/interview-tips' },
   ];
 
   useEffect(() => {
