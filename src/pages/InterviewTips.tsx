@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { YouTube, FileText, FilePresentation, BookOpen, CheckCircle, Clock, ArrowRight } from 'lucide-react';
+import { Youtube, FileText, Presentation, BookOpen, CheckCircle, Clock, ArrowRight } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const InterviewTips: React.FC = () => {
@@ -228,7 +227,7 @@ const InterviewTips: React.FC = () => {
             <div className="flex justify-center">
               <TabsList className="grid grid-cols-4 w-full max-w-2xl">
                 <TabsTrigger value="videos" className="flex items-center gap-2">
-                  <YouTube className="h-4 w-4" />
+                  <Youtube className="h-4 w-4" />
                   <span className="hidden sm:inline">Videos</span>
                 </TabsTrigger>
                 <TabsTrigger value="pdfs" className="flex items-center gap-2">
@@ -236,7 +235,7 @@ const InterviewTips: React.FC = () => {
                   <span className="hidden sm:inline">PDFs</span>
                 </TabsTrigger>
                 <TabsTrigger value="presentations" className="flex items-center gap-2">
-                  <FilePresentation className="h-4 w-4" />
+                  <Presentation className="h-4 w-4" />
                   <span className="hidden sm:inline">Presentations</span>
                 </TabsTrigger>
                 <TabsTrigger value="articles" className="flex items-center gap-2">
@@ -331,7 +330,7 @@ const InterviewTips: React.FC = () => {
                   <Card key={ppt.id}>
                     <CardHeader className="flex flex-row items-start space-x-4">
                       <div className="bg-blue-100 p-2 rounded-lg">
-                        <FilePresentation className="h-8 w-8 text-blue-600" />
+                        <Presentation className="h-8 w-8 text-blue-600" />
                       </div>
                       <div className="space-y-1">
                         <CardTitle className="text-lg">{ppt.title}</CardTitle>

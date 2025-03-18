@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, Share2, Trophy, XCircle, Clock, AlertTriangle, Award } from 'lucide-react';
@@ -261,21 +260,21 @@ const Results: React.FC = () => {
                           <span className="text-green-600">Correct ({metrics.correct})</span>
                           <span>{metrics.correctPercentage}%</span>
                         </div>
-                        <Progress value={metrics.correctPercentage} className="h-1 bg-gray-200" indicatorClass="bg-green-500" />
+                        <Progress value={metrics.correctPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-green-500" />
                       </div>
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-red-600">Incorrect ({metrics.incorrect})</span>
                           <span>{metrics.incorrectPercentage}%</span>
                         </div>
-                        <Progress value={metrics.incorrectPercentage} className="h-1 bg-gray-200" indicatorClass="bg-red-500" />
+                        <Progress value={metrics.incorrectPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-red-500" />
                       </div>
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-gray-500">Skipped ({metrics.skipped})</span>
                           <span>{metrics.skippedPercentage}%</span>
                         </div>
-                        <Progress value={metrics.skippedPercentage} className="h-1 bg-gray-200" indicatorClass="bg-gray-400" />
+                        <Progress value={metrics.skippedPercentage} className="h-1 bg-gray-200" indicatorClassName="bg-gray-400" />
                       </div>
                     </div>
                   </div>
