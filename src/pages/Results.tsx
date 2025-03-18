@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Share2, Trophy, XCircle } from 'luc
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getTopicById, getDifficultyLabel, getDifficultyColor, Difficulty } from '../data/topicsData';
-import { Question } from '../data/questions';
+import { Question } from '../data/types/questionTypes';
 import { useUser } from '../context/UserContext';
 
 const Results: React.FC = () => {
