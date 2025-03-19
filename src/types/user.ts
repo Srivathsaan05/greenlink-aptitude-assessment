@@ -7,6 +7,13 @@ export type UserProfile = {
   skills: string[];
   experience: string[];
   photoUrl?: string;
+  // Resume specific fields
+  hscPercentage?: string;
+  sslcPercentage?: string;
+  certifications?: string[];
+  projects?: { title: string; description: string; technologies?: string[] }[];
+  achievements?: string[];
+  academicAchievements?: string[];
 }
 
 export type ScoreEntry = {

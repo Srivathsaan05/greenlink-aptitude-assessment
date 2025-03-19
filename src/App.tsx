@@ -13,6 +13,7 @@ import Results from "./pages/Results";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import InterviewTips from "./pages/InterviewTips";
+import ResumeBuilder from "./pages/ResumeBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/results/:topicId/:difficulty" element={<Results />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/resume-builder" element={<ResumeBuilder />} />
             <Route path="/interview-tips" element={<InterviewTips />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
