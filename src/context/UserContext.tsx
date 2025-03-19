@@ -21,9 +21,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login, 
     signup, 
     logout, 
-    updateProfile, 
-    loginWithPhone, 
-    verifyOTP,
+    updateProfile,
     defaultProfile
   } = useAuth();
   
@@ -125,7 +123,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 phone: userData.user.phone || userData.user.user_metadata?.phone || '',
                 skills: [],
                 experience: [],
-                education: ''
+                education: '',
+                photoUrl: ''
               };
               
               console.log('Creating new profile:', newProfile);
@@ -143,6 +142,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   education: '',
                   skills: [],
                   experience: [],
+                  photoUrl: ''
                 });
               }
             }
@@ -201,8 +201,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getTopicScore,
         getTotalScore,
         getAverageScore,
-        loginWithPhone,
-        verifyOTP,
         loading
       }}
     >

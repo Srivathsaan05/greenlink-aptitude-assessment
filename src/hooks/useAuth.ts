@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { UserProfile, PhoneSignInOptions } from '@/types/user';
+import { UserProfile } from '@/types/user';
 
 const defaultProfile: UserProfile = {
   name: '',
@@ -19,7 +19,6 @@ export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [loading, setLoading] = useState<boolean>(true);
-  const [phoneLoginData, setPhoneLoginData] = useState<{ phone: string, options?: PhoneSignInOptions }>({ phone: '' });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,6 +51,7 @@ export const useAuth = () => {
             email: data.user.email || '',
             name: data.user.user_metadata?.name || '',
             phone: data.user.phone || data.user.user_metadata?.phone || '',
+            photoUrl: ''
           };
           
           await supabase.from('profiles').insert(newProfile);
@@ -65,102 +65,6 @@ export const useAuth = () => {
       });
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const loginWithPhone = async (phone: string, options?: PhoneSignInOptions) => {
-    try {
-      setLoading(true);
-      setPhoneLoginData({ phone, options });
-      
-      const { error } = await supabase.auth.signInWithOtp({ 
-        phone,
-        options: {
-          shouldCreateUser: options?.signUp || false
-        }
-      });
-      
-      if (error) {
-        toast({
-          title: "Phone verification failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      toast({
-        title: "Verification code sent",
-        description: "Please check your phone for the verification code.",
-      });
-    } catch (error) {
-      console.error('Phone login error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const verifyOTP = async (phone: string, otp: string) => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone,
-        token: otp,
-        type: 'sms'
-      });
-      
-      if (error) {
-        toast({
-          title: "Verification failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      // If signing up, update the profile with the provided name
-      if (data.user && phoneLoginData.options?.signUp) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (profileError && profileError.code === 'PGRST116') {
-          // Profile doesn't exist, create one
-          const newProfile = {
-            id: data.user.id,
-            email: data.user.email || '',
-            name: phoneLoginData.options.name || '',
-            phone: phone,
-          };
-          
-          await supabase.from('profiles').insert(newProfile);
-        } else {
-          // Update existing profile
-          await supabase
-            .from('profiles')
-            .update({
-              name: phoneLoginData.options.name || profileData.name,
-              phone: phone,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', data.user.id);
-        }
-      }
-      
-      navigate('/');
-      toast({
-        title: "Verification successful",
-        description: "You've been logged in successfully.",
-      });
-    } catch (error) {
-      console.error('OTP verification error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -199,7 +103,8 @@ export const useAuth = () => {
           phone: phone,
           skills: [],
           experience: [],
-          education: ''
+          education: '',
+          photoUrl: ''
         };
         
         const { error: profileError } = await supabase
@@ -295,8 +200,6 @@ export const useAuth = () => {
     signup,
     logout,
     updateProfile,
-    loginWithPhone,
-    verifyOTP,
     defaultProfile
   };
 };

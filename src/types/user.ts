@@ -19,11 +19,6 @@ export type ScoreEntry = {
   performanceRating?: 'excellent' | 'good' | 'average' | 'poor';
 }
 
-export type PhoneSignInOptions = {
-  signUp?: boolean;
-  name?: string;
-}
-
 export type UserContextType = {
   isAuthenticated: boolean;
   profile: UserProfile;
@@ -36,7 +31,5 @@ export type UserContextType = {
   getTopicScore: (topic: string) => number;
   getTotalScore: () => number;
   getAverageScore: () => number;
-  loginWithPhone: (phone: string, options?: PhoneSignInOptions) => Promise<void>;
-  verifyOTP: (phone: string, otp: string) => Promise<void>;
   loading: boolean;
 }
