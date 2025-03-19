@@ -14,7 +14,8 @@ type UserProfile = {
   photoUrl?: string;
 }
 
-type ScoreEntry = {
+// Export the ScoreEntry type so it can be imported by other components
+export type ScoreEntry = {
   topic: string;
   difficulty: string;
   score: number;
