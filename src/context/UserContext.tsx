@@ -95,20 +95,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (profileError) {
           console.error('Error fetching profile:', profileError);
         } else if (profileData) {
+          console.log('Profile data loaded:', profileData);
           setProfile({
             name: profileData.name || '',
-            email: profileData.email || '',
+            email: profileData.email || session.user.email || '',
             phone: profileData.phone || '',
             education: profileData.education || '',
             skills: profileData.skills || [],
-            experience: profileData.experience || []
+            experience: profileData.experience || [],
+            photoUrl: profileData.photoUrl || ''
           });
         }
         
         // Load scores from localStorage
-        const storedScores = localStorage.getItem('greenlink_scores');
+        const storedScores = localStorage.getItem(`greenlink_scores_${session.user.id}`);
         if (storedScores) {
-          setScores(JSON.parse(storedScores));
+          try {
+            const parsedScores = JSON.parse(storedScores);
+            // Convert date strings back to Date objects
+            const scoresWithDates = parsedScores.map((score: any) => ({
+              ...score,
+              date: new Date(score.date)
+            }));
+            setScores(scoresWithDates);
+          } catch (e) {
+            console.error('Error parsing stored scores:', e);
+          }
         }
       }
       
@@ -119,30 +131,80 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
       if (event === 'SIGNED_IN' && session) {
         setIsAuthenticated(true);
         
         // Get user profile
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
         
-        if (profileData) {
+        if (profileError) {
+          console.error('Error fetching profile after sign in:', profileError);
+          
+          // If profile doesn't exist, create one
+          if (profileError.code === 'PGRST116') {
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData?.user) {
+              const newProfile = {
+                id: userData.user.id,
+                email: userData.user.email || '',
+                name: userData.user.user_metadata?.name || '',
+                phone: userData.user.phone || userData.user.user_metadata?.phone || '',
+                skills: [],
+                experience: [],
+                education: ''
+              };
+              
+              console.log('Creating new profile:', newProfile);
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert(newProfile);
+                
+              if (insertError) {
+                console.error('Error creating profile:', insertError);
+              } else {
+                setProfile({
+                  name: newProfile.name,
+                  email: newProfile.email,
+                  phone: newProfile.phone,
+                  education: '',
+                  skills: [],
+                  experience: [],
+                });
+              }
+            }
+          }
+        } else if (profileData) {
+          console.log('Profile data loaded after sign in:', profileData);
           setProfile({
             name: profileData.name || '',
-            email: profileData.email || '',
+            email: profileData.email || session.user.email || '',
             phone: profileData.phone || '',
             education: profileData.education || '',
             skills: profileData.skills || [],
-            experience: profileData.experience || []
+            experience: profileData.experience || [],
+            photoUrl: profileData.photoUrl || ''
           });
-          
-          // Load scores from localStorage
-          const storedScores = localStorage.getItem('greenlink_scores');
-          if (storedScores) {
-            setScores(JSON.parse(storedScores));
+        }
+        
+        // Load scores from localStorage
+        const storedScores = localStorage.getItem(`greenlink_scores_${session.user.id}`);
+        if (storedScores) {
+          try {
+            const parsedScores = JSON.parse(storedScores);
+            // Convert date strings back to Date objects
+            const scoresWithDates = parsedScores.map((score: any) => ({
+              ...score,
+              date: new Date(score.date)
+            }));
+            setScores(scoresWithDates);
+          } catch (e) {
+            console.error('Error parsing stored scores:', e);
           }
         }
       } else if (event === 'SIGNED_OUT') {
@@ -159,15 +221,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Save scores to localStorage whenever they change
   useEffect(() => {
-    if (isAuthenticated && scores.length > 0) {
-      localStorage.setItem('greenlink_scores', JSON.stringify(scores));
-    }
+    const saveScores = async () => {
+      if (isAuthenticated && scores.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          localStorage.setItem(`greenlink_scores_${user.id}`, JSON.stringify(scores));
+        }
+      }
+    };
+    
+    saveScores();
   }, [isAuthenticated, scores]);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         toast({
@@ -176,6 +245,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
         throw error;
+      }
+      
+      // Ensure user profile exists
+      if (data.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError && profileError.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          const newProfile = {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: data.user.user_metadata?.name || '',
+            phone: data.user.phone || data.user.user_metadata?.phone || '',
+          };
+          
+          await supabase.from('profiles').insert(newProfile);
+        }
       }
       
       navigate('/');
@@ -228,7 +318,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         phone,
         token: otp,
         type: 'sms'
@@ -244,18 +334,33 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // If signing up, update the profile with the provided name
-      if (phoneLoginData.options?.signUp && phoneLoginData.options?.name) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
+      if (data.user && phoneLoginData.options?.signUp) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError && profileError.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          const newProfile = {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: phoneLoginData.options.name || '',
+            phone: phone,
+          };
+          
+          await supabase.from('profiles').insert(newProfile);
+        } else {
+          // Update existing profile
           await supabase
             .from('profiles')
             .update({
-              name: phoneLoginData.options.name,
+              name: phoneLoginData.options.name || profileData.name,
               phone: phone,
               updated_at: new Date().toISOString()
             })
-            .eq('id', user.id);
+            .eq('id', data.user.id);
         }
       }
       
@@ -275,7 +380,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string, phone: string = '') => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -293,6 +398,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
         throw error;
+      }
+      
+      // Create user profile
+      if (data.user) {
+        const newProfile = {
+          id: data.user.id,
+          email: email,
+          name: name,
+          phone: phone,
+          skills: [],
+          experience: [],
+          education: ''
+        };
+        
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert(newProfile);
+          
+        if (profileError) {
+          console.error('Error creating profile during signup:', profileError);
+        }
       }
       
       navigate('/');
@@ -315,7 +441,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(false);
       setProfile(defaultProfile);
       setScores([]);
-      localStorage.removeItem('greenlink_scores');
       navigate('/');
       toast({
         title: "Logged out",
@@ -347,7 +472,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .eq('id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
       
       setProfile(prev => ({ ...prev, ...updatedProfile }));
       toast({
