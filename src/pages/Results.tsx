@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, Share2, Trophy, XCircle, Clock, AlertTriangle, Award } from 'lucide-react';
@@ -7,7 +8,7 @@ import { getTopicById, getDifficultyLabel, getDifficultyColor, Difficulty } from
 import { Question } from '../data/types/questionTypes';
 import { useUser } from '../context/UserContext';
 import { Progress } from '@/components/ui/progress';
-import { PerformanceChart } from '@/components/results/PerformanceChart';
+import PerformanceChart from '@/components/results/PerformanceChart';
 import { PerformanceMetrics } from '@/components/results/PerformanceMetrics';
 
 const Results: React.FC = () => {

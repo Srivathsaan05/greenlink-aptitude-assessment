@@ -20,13 +20,20 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScoreEntry } from '@/context/UserContext';
+import { ScoreEntry } from '@/types/user';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'];
 
 type PerformanceChartProps = {
   scores: ScoreEntry[];
   selectedTab?: string;
+  currentScore?: {
+    topic: string;
+    score: number;
+    total: number;
+    timeTaken?: number;
+    performanceRating?: 'excellent' | 'good' | 'average' | 'poor';
+  };
 };
 
 const getMetricValue = (
