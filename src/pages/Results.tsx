@@ -136,6 +136,12 @@ const Results: React.FC = () => {
   
   const metrics = getQuestionPerformanceMetrics();
   
+  // Check if an answer is correct
+  const isAnswerCorrect = (questionIndex: number, userAnswerIndex: number | null): boolean => {
+    if (userAnswerIndex === null) return false;
+    return userAnswerIndex === questions[questionIndex].correctAnswer;
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -243,7 +249,7 @@ const Results: React.FC = () => {
             <div className="space-y-6">
               {questions.map((question: Question, index: number) => {
                 const userAnswer = answers[index];
-                const isCorrect = userAnswer === question.correctAnswer;
+                const isCorrect = isAnswerCorrect(index, userAnswer);
                 const questionTime = questionTimes?.[index] || 0;
                 
                 return (
@@ -252,7 +258,9 @@ const Results: React.FC = () => {
                     className="bg-white rounded-xl border shadow-sm overflow-hidden"
                   >
                     <div className={`p-4 flex justify-between items-center ${
-                      isCorrect ? 'bg-green-50 border-b border-green-100' : 'bg-red-50 border-b border-red-100'
+                      isCorrect ? 'bg-green-50 border-b border-green-100' : 
+                      userAnswer !== null ? 'bg-red-50 border-b border-red-100' : 
+                      'bg-gray-50 border-b border-gray-100'
                     }`}>
                       <div className="flex items-center">
                         <span className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-white text-gray-700 font-medium shadow-sm mr-3">
@@ -263,10 +271,15 @@ const Results: React.FC = () => {
                             <CheckCircle className="h-5 w-5 mr-2" />
                             <span className="font-medium">Correct</span>
                           </div>
-                        ) : (
+                        ) : userAnswer !== null ? (
                           <div className="flex items-center text-red-600">
                             <XCircle className="h-5 w-5 mr-2" />
                             <span className="font-medium">Incorrect</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-gray-600">
+                            <AlertTriangle className="h-5 w-5 mr-2" />
+                            <span className="font-medium">Skipped</span>
                           </div>
                         )}
                       </div>
@@ -289,7 +302,7 @@ const Results: React.FC = () => {
                             className={`p-3 rounded-lg border ${
                               optionIndex === question.correctAnswer
                                 ? 'bg-green-50 border-green-200'
-                                : optionIndex === userAnswer
+                                : optionIndex === userAnswer && optionIndex !== question.correctAnswer
                                   ? 'bg-red-50 border-red-200'
                                   : 'border-gray-200'
                             }`}
@@ -298,7 +311,7 @@ const Results: React.FC = () => {
                               <div className={`flex items-center justify-center w-6 h-6 rounded-full mr-3 ${
                                 optionIndex === question.correctAnswer
                                   ? 'bg-green-500 text-white'
-                                  : optionIndex === userAnswer
+                                  : optionIndex === userAnswer && optionIndex !== question.correctAnswer
                                     ? 'bg-red-500 text-white'
                                     : 'bg-gray-200 text-gray-700'
                               }`}>

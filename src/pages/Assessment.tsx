@@ -21,14 +21,10 @@ const Assessment: React.FC = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<Date | null>(null);
   const [questionTimes, setQuestionTimes] = useState<number[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   
   const topic = getTopicById(topicId || '');
-  const questions = getQuestionsByTopicAndDifficulty(
-    topicId || '', 
-    difficulty as Difficulty || 'easy',
-    25
-  );
-
+  
   const timerRef = useRef<number | null>(null);
   
   // Redirect to login if not authenticated
@@ -38,9 +34,20 @@ const Assessment: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
   
+  // Load questions once on component mount
+  useEffect(() => {
+    if (topicId && difficulty) {
+      const loadedQuestions = getQuestionsByTopicAndDifficulty(
+        topicId, 
+        difficulty as Difficulty || 'easy',
+        25
+      );
+      setQuestions(loadedQuestions);
+    }
+  }, [topicId, difficulty]);
+  
   useEffect(() => {
     if (!topic || !questions.length) {
-      navigate('/topics');
       return;
     }
     
@@ -67,7 +74,7 @@ const Assessment: React.FC = () => {
     timerRef.current = window.setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 0) {
-          clearInterval(timerRef.current!);
+          if (timerRef.current) clearInterval(timerRef.current);
           handleSubmitAssessment();
           return 0;
         }
@@ -81,7 +88,10 @@ const Assessment: React.FC = () => {
   }, [topic, questions]);
   
   if (!topic || !questions.length) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <span className="ml-3 text-lg">Loading assessment...</span>
+    </div>;
   }
   
   const handleOptionSelect = (optionIndex: number) => {
@@ -123,6 +133,8 @@ const Assessment: React.FC = () => {
   };
   
   const handleSubmitAssessment = () => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     
     // Save time for current question
@@ -142,14 +154,16 @@ const Assessment: React.FC = () => {
     }, 0);
     
     // Add score to user context
-    addScore({
-      topic: topicId || '',
-      difficulty: difficulty as Difficulty || 'easy',
-      score,
-      total: questions.length,
-      timeTaken: totalTimeTaken,
-      performanceRating: getPerformanceRating(score, questions.length)
-    });
+    if (topicId) {
+      addScore({
+        topic: topicId,
+        difficulty: difficulty as Difficulty || 'easy',
+        score,
+        total: questions.length,
+        timeTaken: totalTimeTaken,
+        performanceRating: getPerformanceRating(score, questions.length)
+      });
+    }
     
     // Navigate to results page
     navigate(`/results/${topicId}/${difficulty}`, {
@@ -187,17 +201,7 @@ const Assessment: React.FC = () => {
   
   const currentQuestion = questions[currentQuestionIndex];
   const answeredCount = answers.filter(answer => answer !== null).length;
-  
-  // Get expected time per question based on difficulty
-  const getExpectedTimePerQuestion = (): number => {
-    switch(difficulty) {
-      case 'easy': return 45; // 45 seconds
-      case 'medium': return 75; // 1 minute 15 seconds
-      case 'hard': return 120; // 2 minutes
-      default: return 60; // 1 minute default
-    }
-  };
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
